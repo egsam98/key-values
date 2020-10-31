@@ -9,15 +9,13 @@ import (
 
 var _ DBTX = (*SQLite)(nil)
 
-const DatabaseName = "db.sqlite"
-
 // Реализация СУБД-интерфейса
 type SQLite struct {
 	db *sql.DB
 }
 
-func NewSQLite() (*SQLite, error) {
-	db, err := sql.Open("sqlite3", DatabaseName)
+func NewSQLite(dbName string) (DBTX, error) {
+	db, err := sql.Open("sqlite3", dbName)
 	if err != nil {
 		return nil, err
 	}

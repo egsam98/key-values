@@ -8,3 +8,6 @@ migrate_down:
 
 sqlc:
 	sqlc generate
+
+go-test:
+	go test ./test/...

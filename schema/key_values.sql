@@ -1,4 +1,4 @@
-create table key_values (
+create table if not exists key_values (
     k varchar(255) not null unique,
     v text
 );
