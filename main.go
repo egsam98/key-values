@@ -17,15 +17,14 @@ func main() {
 		log.Printf("%+v\n", err)
 		e.DefaultHTTPErrorHandler(err, ctx)
 	}
-	queries := initQueries(e)
-	initRoutes(e, queries)
+	initRoutes(e, initQueries())
 	e.Logger.Fatal(e.Start(ADDR))
 }
 
-func initQueries(e *echo.Echo) *db.Queries {
+func initQueries() *db.Queries {
 	sqlite, err := db.NewSQLite()
 	if err != nil {
-		e.Logger.Fatal(err)
+		panic(err)
 	}
 	return db.New(sqlite)
 }
