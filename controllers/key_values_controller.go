@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"net/http"
 
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
@@ -16,8 +17,12 @@ type KeyValueController struct {
 	service *services.KeyValueService
 }
 
-func NewKeyValueController(queries *db.Queries) *KeyValueController {
-	return &KeyValueController{service: services.NewKeyValueService(queries)}
+func NewKeyValueController(cacheSize int, dbtx db.DBTX) *KeyValueController {
+	cache, err := lru.New(cacheSize)
+	if err != nil {
+		panic(err)
+	}
+	return &KeyValueController{service: services.NewKeyValueService(cache, dbtx)}
 }
 
 func (self *KeyValueController) Get(ctx echo.Context) error {

@@ -3,8 +3,11 @@ package services
 import (
 	"context"
 	"database/sql"
+	"strconv"
+	"sync"
 	"testing"
 
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/stretchr/testify/suite"
 
 	"key-value-store/db"
@@ -24,7 +27,9 @@ type keyValueServiceSuite struct {
 func (s *keyValueServiceSuite) SetupSuite() {
 	ctx := context.TODO()
 	s.db = test.NewTestDB()
-	s.service = services.NewKeyValueService(db.New(s.db))
+	cache, err := lru.New(1024)
+	s.NoError(err)
+	s.service = services.NewKeyValueService(cache, s.db)
 	s.getByKey = func(key string) (*string, error) {
 		return s.service.GetByKey(ctx, key)
 	}
@@ -70,4 +75,44 @@ func (s *keyValueServiceSuite) Test_PutKey_Success() {
 	var one int
 	s.NoError(row.Scan(&one))
 	s.Equal(one, 1)
+}
+
+func Benchmark_GetByKey_Caching(b *testing.B) {
+	cache := &test.CacheMock{}
+	testDB := test.NewTestDB()
+	service := services.NewKeyValueService(cache, testDB)
+
+	b.Run("when success", func(b *testing.B) {
+		key := "key"
+		cache.On("Get", key).Return(new(string), true)
+		b.ResetTimer()
+		_, _ = service.GetByKey(context.TODO(), key)
+	})
+
+	b.Run("when page fault occured", func(b *testing.B) {
+		ctx := context.TODO()
+		cache.On("Get", "").Return(nil, false)
+		randomizeKeyValues(service, 500)
+
+		b.ResetTimer()
+		_, _ = service.GetByKey(ctx, "")
+		b.StopTimer()
+
+		b.Cleanup(func() {
+			_, _ = testDB.ExecContext(ctx, `delete from key_values`)
+		})
+	})
+}
+
+func randomizeKeyValues(service *services.KeyValueService, count int) {
+	ctx := context.TODO()
+	var wg sync.WaitGroup
+	wg.Add(count)
+	for i := 0; i < count; i++ {
+		go func() {
+			_ = service.PutKey(ctx, strconv.Itoa(i), nil)
+			wg.Done()
+		}()
+	}
+	wg.Wait()
 }

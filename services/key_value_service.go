@@ -4,26 +4,20 @@ import (
 	"context"
 	"database/sql"
 
-	lru "github.com/hashicorp/golang-lru"
+	"github.com/hashicorp/golang-lru/simplelru"
 	"github.com/pkg/errors"
 
 	"key-value-store/db"
 )
 
-const CacheSize = 1024
-
 // Сервис взаимодействия с хранилищем ключ-значения
 type KeyValueService struct {
 	q     *db.Queries
-	cache *lru.Cache
+	cache simplelru.LRUCache
 }
 
-func NewKeyValueService(queries *db.Queries) *KeyValueService {
-	cache, err := lru.New(CacheSize)
-	if err != nil {
-		panic(err)
-	}
-	return &KeyValueService{q: queries, cache: cache}
+func NewKeyValueService(cache simplelru.LRUCache, dbtx db.DBTX) *KeyValueService {
+	return &KeyValueService{q: db.New(dbtx), cache: cache}
 }
 
 func (self *KeyValueService) GetByKey(ctx context.Context, key string) (*string, error) {

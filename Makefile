@@ -10,4 +10,4 @@ sqlc:
 	sqlc generate
 
 go-test:
-	go test ./test/...
+	go test ./test/... -bench=.

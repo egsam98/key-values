@@ -11,6 +11,8 @@ import (
 	"key-value-store/db"
 )
 
+const CacheSize = 1024
+
 type EchoServer struct {
 	*http.Server
 	addr string
@@ -22,7 +24,7 @@ func StartEchoServer(addr string, dbtx db.DBTX, block bool) *EchoServer {
 		log.Printf("%+v\n", err)
 		e.DefaultHTTPErrorHandler(err, ctx)
 	}
-	initRoutes(e, db.New(dbtx))
+	initRoutes(e, dbtx)
 
 	ready := make(chan struct{})
 	join := make(chan struct{})
@@ -47,8 +49,8 @@ func StartEchoServer(addr string, dbtx db.DBTX, block bool) *EchoServer {
 	return &EchoServer{Server: e.Server, addr: addr}
 }
 
-func initRoutes(e *echo.Echo, queries *db.Queries) {
-	c := controllers.NewKeyValueController(queries)
+func initRoutes(e *echo.Echo, dbtx db.DBTX) {
+	c := controllers.NewKeyValueController(CacheSize, dbtx)
 	e.GET("/kv/:key", c.Get)
 	e.PUT("/kv/:key", c.Put)
 }
