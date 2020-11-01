@@ -25,6 +25,18 @@ func NewKeyValueController(cacheSize int, dbtx db.DBTX) *KeyValueController {
 	return &KeyValueController{service: services.NewKeyValueService(cache, dbtx)}
 }
 
+// swagger:route GET /kv/{key} kv getKeyValue
+//
+// Получить значение из базы по ключу {key}
+//
+// Produces:
+// - application/json
+//
+// Schemes: http
+//
+// Responses:
+// 200: ValueResponse
+// 404: HTTPErrorResponse
 func (self *KeyValueController) Get(ctx echo.Context) error {
 	value, err := self.service.GetByKey(ctx.Request().Context(), ctx.Param("key"))
 	if err != nil {
@@ -36,6 +48,21 @@ func (self *KeyValueController) Get(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, echo.Map{"value": value})
 }
 
+// swagger:route PUT /kv/{key} kv putKeyValue
+//
+// Добавить в базу значение по ключу {key}
+//
+// Produces:
+// - application/json
+//
+// Consumes:
+// - application/json
+//
+// Schemes: http
+//
+// Responses:
+// 200:
+// 400: HTTPErrorResponse
 func (self *KeyValueController) Put(ctx echo.Context) error {
 	value, err := self.validatePutBody(ctx)
 	if err != nil {

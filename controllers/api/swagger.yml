@@ -1,0 +1,69 @@
+definitions:
+  Value:
+    properties:
+      value:
+        type: string
+        x-go-name: Value
+    type: object
+    x-go-package: key-value-store/controllers/api
+paths:
+  /kv/{key}:
+    get:
+      description: Получить значение из базы по ключу {key}
+      operationId: getKeyValue
+      parameters:
+      - in: path
+        name: key
+        required: true
+        type: string
+        x-go-name: Key
+      produces:
+      - application/json
+      responses:
+        "200":
+          $ref: '#/responses/ValueResponse'
+        "404":
+          $ref: '#/responses/HTTPErrorResponse'
+      schemes:
+      - http
+      tags:
+      - kv
+    put:
+      consumes:
+      - application/json
+      description: Добавить в базу значение по ключу {key}
+      operationId: putKeyValue
+      parameters:
+      - in: path
+        name: key
+        required: true
+        type: string
+        x-go-name: Key
+      - in: body
+        name: value
+        required: true
+        schema:
+          $ref: '#/definitions/Value'
+        x-go-name: Kalue
+      produces:
+      - application/json
+      responses:
+        "200": {}
+        "400":
+          $ref: '#/responses/HTTPErrorResponse'
+      schemes:
+      - http
+      tags:
+      - kv
+responses:
+  HTTPErrorResponse:
+    schema:
+      properties:
+        message:
+          type: string
+          x-go-name: Message
+      type: object
+  ValueResponse:
+    schema:
+      $ref: '#/definitions/Value'
+swagger: "2.0"
